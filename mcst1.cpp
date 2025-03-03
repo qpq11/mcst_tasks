@@ -1,84 +1,91 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h> 
-#include <malloc.h>
+#include <pthread.h>
 
-const int ThreadCnt = 4; // Количество потоков. Значение можно оптимизировать (4 потока на маленьком массиве разницы ощутимой не дадут )
+#define ThreadCnt 4 
 
-int cmp_func (const void * a, const void * b) 
-{
-   return ( *(int*)a - *(int*)b );
+typedef struct {
+    int* subarray;
+    int size;
+} ThreadData;
+
+int cmp_func(const void* a, const void* b) {
+    return (*(int*)a - *(int*)b);
 }
 
-void * quick_sort(void* args)
-{ 
-    qsort(args, (sizeof(args) / sizeof(int)), sizeof(int), cmp_func);
+void* quick_sort(void* args) {
+    ThreadData* data = (ThreadData*)args;
+    qsort(data->subarray, data->size, sizeof(int), cmp_func);
+    return NULL;
 }
 
-int * merge(int* left, int* right)
-{
-	int  leftSize       =  sizeof(left) / sizeof(int);
-	int  mergedSize = (sizeof(left) + sizeof(right)) / sizeof(int);
-	int* mergedArr   = (int*) calloc(mergedSize, sizeof(int));
-	
-	for (int i = 0; i < mergedSize; i++)
-	{
-		if (i < leftSize)
-		{
-			mergedArr[i] = left[i];
-		}
-		else
-		{
-			mergedArr[i] = right[i - leftSize];
-		}
-	}
-	
-	free(left);
-	free(right);
-	
-	return mergedArr;
+int* merge(int* left, int leftSize, int* right, int rightSize) {
+    int mergedSize = leftSize + rightSize;
+    int* mergedArr = (int*) calloc(mergedSize, sizeof(int));
+
+    for (int i = 0; i < leftSize; i++)
+        mergedArr[i] = left[i];
+
+    for (int i = 0; i < rightSize; i++)
+        mergedArr[leftSize + i] = right[i];
+
+    free(left);
+    free(right);
+    return mergedArr;
 }
 
-int main()
-{
+int main() {
     pthread_t thread[ThreadCnt];
-    int arrSize = 0;
-	scanf("%d", &arrSize);
-	int* arr = (int*) calloc(arrSize, sizeof(int));
-	int* threadSubArr[ThreadCnt] ;
-	int i = 0;
-	for (i = 0; i < arrSize; i++)
-	{
-		scanf("%d", &arr[i]);
-	}
-	int j = 0;
-	int baseSize = arrSize / ThreadCnt;
-	int addSize   = arrSize % ThreadCnt;
-    for(j = 0; j < ThreadCnt; j++)
-	{
-		int start = (baseSize + 1) * j ;
-        int end  = ((start + baseSize) <= arrSize ? (start + baseSize) : arrSize);						//+ (j < addSize ? 1 : 0); 
-		threadSubArr[j] = (int*) calloc(end - start,sizeof(int));
-		for (int i = start; i < end; i++  )
-		{
-			threadSubArr[j][i-start] = arr[i];
-		}
-        //index_start = (baseSize + 1) * j ;
-        //index_end  = threadSubArr[j].index_start + baseSize + (j < addSize ? 1 : 0); 
-        pthread_create(&thread[j], NULL, quick_sort, &threadSubArr[j]); 
-    }
+    ThreadData threadData[ThreadCnt];
     
-	int* res = (int*) calloc(arrSize, sizeof(int));
-    for(j = 0; j < ThreadCnt; j++)
-	{
-        pthread_join(thread[j], NULL); 
-        res = merge(res, threadSubArr[j]);
+    int arrSize;
+    printf("Введите размер массива: ");
+    scanf("%d", &arrSize);
+
+    int* arr = (int*) calloc(arrSize, sizeof(int));
+    printf("Введите %d элементов: ", arrSize);
+    for (int i = 0; i < arrSize; i++)
+        scanf("%d", &arr[i]);
+
+    int* threadSubArr[ThreadCnt];
+    int baseSize = arrSize / ThreadCnt;
+    int addSize = arrSize % ThreadCnt;
+
+    int start = 0;
+    for (int j = 0; j < ThreadCnt; j++) {
+        int size = baseSize + (j == ThreadCnt - 1 ? addSize : 0);
+        threadSubArr[j] = (int*) calloc(size, sizeof(int));
+
+        for (int i = 0; i < size; i++)
+            threadSubArr[j][i] = arr[start + i];
+
+        start += size;
+
+        threadData[j].subarray = threadSubArr[j];
+        threadData[j].size = size;
+        pthread_create(&thread[j], NULL, quick_sort, &threadData[j]);
+    }
+
+    for (int j = 0; j < ThreadCnt; j++)
+        pthread_join(thread[j], NULL);
+
+    int* res = threadSubArr[0];
+    int resSize = (ThreadCnt == 1) ? arrSize : baseSize;
+
+    for (int j = 1; j < ThreadCnt; j++) {
+        res = merge(res, resSize, threadSubArr[j], (j == ThreadCnt - 1 ? baseSize + addSize : baseSize));
+        resSize += (j == ThreadCnt - 1 ? baseSize + addSize : baseSize);
     }
 	
-	for(i = 0; i < arrSize; i++)
-	{
-		printf("%d  ", res[i]);
-	}
-	free(res);
-	free(arr);
+	qsort(res, arrSize, sizeof(int), cmp_func);
+	
+    printf("Отсортированный массив: ");
+    for (int i = 0; i < arrSize; i++)
+        printf("%d ", res[i]);
+    
+    printf("\n");
+
+    free(res);
+    free(arr);
+    return 0;
 }
