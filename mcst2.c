@@ -6,9 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <malloc.h>
 
-const int FifoNameLen = 9;
+const int FifoNameLen = 10;
 const int BufSize = 15;
 
 int main(const int argc, const char *argv[]) 
@@ -22,22 +21,32 @@ int main(const int argc, const char *argv[])
 	int fd = 0;
 	size_t size = 0;
 	
-	char* name1 = (char*) calloc(FifoNameLen, sizeof(char));
-	name1 ="try1.fifo";
-	char* name2 = (char*) calloc(FifoNameLen, sizeof(char));
-	name2 ="try2.fifo";
-	char* temp   = (char*) calloc(FifoNameLen, sizeof(char));
+	// char* name1 = (char*) calloc(FifoNameLen, sizeof(char));
+	// name1 ="try1.fifo";
+	// char* name2 = (char*) calloc(FifoNameLen, sizeof(char));
+	// name2 ="try2.fifo";
+	// char* temp   = (char*) calloc(FifoNameLen, sizeof(char));
+	// temp    ="temp.name";
+	char name1[FifoNameLen];
+	char name2[FifoNameLen];
 	
 	if (!strcmp(argv[1], "1"))
 	{
 		printf("argument: 1\n");
+		strcpy(name1, "try1.fifo");
+		strcpy(name2, "try2.fifo");
 	}
 	else if (!strcmp(argv[1], "2"))
 	{
 		printf("argument: 2\n");
-		temp = name1;
-		name1 = name2;
-		name2 = temp;
+		strcpy(name1, "try2.fifo");
+		strcpy(name2, "try1.fifo");
+		// temp = name1;
+		// name1 = name2;
+		// name2 = temp;
+		// strcpy(temp, name1);
+        // strcpy(name1, name2);
+        // strcpy(name2, temp);
 	}
 	else
 	{
@@ -103,10 +112,11 @@ int main(const int argc, const char *argv[])
 			
 			if(!strcmp(buf, "##\n"))
 			{
-				close(fd);
-				free(temp);
-				free(name1);
-				free(name2);
+				// close(fd);
+				// free(temp);
+				// free(name1);
+				// free(name2);
+				size = write(fd, buf, strlen(buf) + 1);
 				exit(0);
 				return 0;
 			}
@@ -119,10 +129,10 @@ int main(const int argc, const char *argv[])
 				 exit(-1);
 			}
         }
-		close(fd);
-		free(temp);
-		free(name1);
-		free(name2);
+		// close(fd);
+		// free(temp);
+		// free(name1);
+		// free(name2);
     } 
 	
 	else 
@@ -139,10 +149,10 @@ int main(const int argc, const char *argv[])
 			
 			if(!strcmp(resstring, "##\n"))
 			{
-				close(fd);
-				free(temp);
-				free(name1);
-				free(name2);
+				// close(fd);
+				// free(temp);
+				// free(name1);
+				// free(name2);
 				exit(0);
 				return 0;
 			}
@@ -154,10 +164,10 @@ int main(const int argc, const char *argv[])
 			}
 			printf("<<<Received message: %s\n>>>Enter message: \n", resstring);
         }
-		close(fd);
-		free(temp);
-		free(name1);
-		free(name2);
+		// close(fd);
+		// free(temp);
+		// free(name1);
+		// free(name2);
     }
 
     return 0;
