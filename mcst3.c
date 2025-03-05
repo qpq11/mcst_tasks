@@ -24,23 +24,33 @@ const int PrintSymbolsBegin = 32; //отграничение печатных и
 
 int main(int argc, const char** argv)
 {
-	FILE* ReadFile      = fopen("ReadFile.txt     ",  "r");
+	FILE* ReadFile      = fopen("ReadFile.txt     ", "r ");
 	FILE* SortedFile	= fopen("SortedFile.txt   ", "w+"); //имеем файл под сортировку по первым символам
 	FILE* RevSortedFile = fopen("RevSortedFile.txt", "w+"); //и файл под сортировку по последним символам строк
-	if (argc >= 4)
+	
+	assert(argc >= 2); //обязательно нужно сказать, как мы хотим сортировать файл
+	
+	if (argc == 5)				//ожидаем, что argv[1]- режим сортировки: прямая, обратная (по последним символам)
+	{							//или обе сразу. далее принимаем аргументы- названия исходного и результирующих 
+		FILE* ReadFile      = fopen(argv[2], "r" ); //файлов. аргументы по умолчанию выставлены, так что названия
+		FILE* SortedFile	= fopen(argv[3], "w+"); //вводить необязательно
+		FILE* RevSortedFile = fopen(argv[4], "w+");
+	}
+	else if (argc == 4)
 	{
-		FILE* ReadFile      = fopen(argv[1], "r" );
-		FILE* SortedFile	= fopen(argv[2], "w+");
-		FILE* RevSortedFile = fopen(argv[3], "w+");
+		FILE* ReadFile      = fopen(argv[2], "r" );
+		if (!strcmp(argv[1], "s"))
+		{
+			FILE* SortedFile	= fopen(argv[3], "w+");
+		}
+		else if (!strcmp(argv[1], "r"))
+		{
+			FILE* RevSortedFile	= fopen(argv[3], "w+");
+		}
 	}
 	else if (argc == 3)
 	{
-		FILE* ReadFile      = fopen(argv[1], "r" );
-		FILE* SortedFile	= fopen(argv[2], "w+");
-	}
-	else if (argc == 2)
-	{
-		FILE* ReadFile      = fopen(argv[1], "r" );
+		FILE* ReadFile      = fopen(argv[2], "r" );
 	}
 
 	assert(ReadFile      != NULL);
@@ -69,35 +79,38 @@ int main(int argc, const char** argv)
 		if (*arrPointer[i] == '\n')
 			arrPointer[i]++;
 	}
-
-	BubbleSort(arrPointer, nLines, sizeof(char*), CmpFunc);
-
-	for (size_t j = 0; j < nLines; j++)
+	
+	if (!strcmp(argv[1], "s") || !strcmp(argv[1], "sr"))
 	{
-		printf("%d\n", arrPointer[j][0]);
-		if(arrPointer[j][0] >= PrintSymbolsBegin)
-		{
-			fprintf(SortedFile, "%s", arrPointer[j]);
-			fprintf(SortedFile, "\n");
-		}
-	//fputs(arrPointer[j], SortedFile);
-	}
+		BubbleSort(arrPointer, nLines, sizeof(char*), CmpFunc);
 
+		for (size_t j = 0; j < nLines; j++)
+		{
+			//printf("%d\n", arrPointer[j][0]);     //отладочная информация, не более того
+			if(arrPointer[j][0] >= PrintSymbolsBegin)
+			{
+				fprintf(SortedFile, "%s", arrPointer[j]);
+				fprintf(SortedFile, "\n");
+			}
+		}
+	}
 	fclose(SortedFile);
-	putchar('\n');
+	//putchar('\n');
 
-	RevBubbleSort(arrPointer, nLines, sizeof(char*), CmpFuncRev);
-
-	for (size_t j = 0; j < nLines; j++)
+	if (!strcmp(argv[1], "r") || !strcmp(argv[1], "sr"))
 	{
-		printf("%d\n", arrPointer[j][0]);
-		if(arrPointer[j][0] >= 32)
+		RevBubbleSort(arrPointer, nLines, sizeof(char*), CmpFuncRev);
+
+		for (size_t j = 0; j < nLines; j++)
 		{
-			fprintf(RevSortedFile, "%s", arrPointer[j]);
-			fprintf(RevSortedFile, "\n");
+			//printf("%d\n", arrPointer[j][0]);     //отладочная информация, не более того
+			if(arrPointer[j][0] >= PrintSymbolsBegin)
+			{
+				fprintf(RevSortedFile, "%s", arrPointer[j]);
+				fprintf(RevSortedFile, "\n");
+			}
 		}
 	}
-
 	fclose(RevSortedFile);
 	
 	free(arrPointer);
@@ -106,7 +119,7 @@ int main(int argc, const char** argv)
 	return 0;
 }
 
-
+//функция для подсчета количества строк
 size_t CountLines(char* txtarr)
 {
 	int i = 0;
@@ -132,7 +145,8 @@ size_t CountLines(char* txtarr)
 	return cnt;
 }
 
-
+//сортировки обе ведутся пузырьком. внушительный размер тестового файла и нормальная работа с ним
+//указывают на то, что даже скорости пузырька здесь хватает
 void BubbleSort(char* arr[], size_t sizeofarr, size_t sizeoftype, int (*cmp)(const void*, const void*))
 {
 	for (int unsigned pass = 0; pass < sizeofarr - 1; pass++)
@@ -208,10 +222,10 @@ void Swap(void* ptr1, void* ptr2, size_t sizeofelem)
 {
 	void* temp = (void*)calloc(sizeofelem, 1);
 
-	temp = ptr1;
-	ptr1 = ptr2;
-	ptr2 = temp;
-
+	memcpy(temp, ptr1, sizeofelem);
+	memcpy(ptr1, ptr2, sizeofelem);
+	memcpy(ptr2, temp, sizeofelem);		//ПРОСТО ПЕРЕПРИСВАИВАНИЕ ВСЕ ЛОМАЛО
+										
 	free(temp);
 }
 
