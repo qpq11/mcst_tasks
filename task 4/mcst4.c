@@ -1,5 +1,5 @@
-#include <stdio.h>     /* для printf */
-#include <stdlib.h>    /* для exit */
+#include <stdio.h>
+#include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
 
@@ -11,9 +11,9 @@ const char* ElbrusAllowed[] =
 	"4c" ,
 	"8c" ,
 	"16c",
-};
+}; //разрешенные аргументы для опции elbrus
 
-int elbrusvalid(const char* arg)
+int elbrusvalid(const char* arg) //проверка валидности аргументов всех использований elbrus
 {
 	for (size_t i = 0; i < sizeof(ElbrusAllowed) / sizeof(ElbrusAllowed[0]); i++)
 	{
@@ -24,60 +24,65 @@ int elbrusvalid(const char* arg)
 }
 
 int main (int argc, char **argv) {
-    int c;
-    int optionIndex = 0;
-	char* elbrusMode = NULL;
+    int c; //переменная, куда сохраняется возвращаемое функцией значение
+    int optionIndex = 0; //указывает на переменную с индексом длинной опции в LongOptions либо на NULL
 	
-	static struct option LongOptions[] = {
-		{"elbrus=", 1, 0, 1000},
-		{0, 0, 0, 0}
-	};
-
-	while ((c = getopt_long (argc, argv, "m::c::s::t::", LongOptions, &optionIndex)) >= 0)
+	static struct option LongOptions[] = 
 	{
-		if (c == -1)
+		{"elbrus=", 1, 0, 1000}, //ставим 1000, чтобы в switch точно не перепутать опцию ни с какой другой (короткой)
+		{0, 0, 0, 0}
+	}; //массив разрешенных длинных опций; обязательно ноль-терминирован
+
+	while ((c = getopt_long (argc, argv, "mcst", LongOptions, &optionIndex)) >= 0)
+	{
+		if (c == -1) //завершение работы при достижении конца
 			break;
 
 		switch (c) {
 			case 'm':
-				printf ("param m with value `%s'\n", optarg);
+				printf ("valid option: param m\n");
 				break;
 
 			case 's':
-				printf ("param s with value `%s'\n", optarg);
+				printf ("valid option: param s\n");
 				break;
 
 			case 'c':
-				printf ("param c with value `%s'\n", optarg);
+				printf ("valid option: param c\n");
 				break;
 
 			case 't':
-				printf ("param t with value `%s'\n", optarg);
+				printf ("valid option: param t\n");
 				break;
 			
 			case 1000:
 				if (elbrusvalid(optarg))
 				{	
-					printf("elbrus= %s\n", optarg);
+					printf("valid option: elbrus=%s\n", optarg);
 				}
 				else
 				{
-					printf("ERROR: elbrus wrong option\n");
+					printf(">>invalid elbrus argument: elbrus=%s\n", optarg);
+					return -2;
 				}
-			case '?':
 				break;
+			case '?': //неразрешенная в optstring опция/неправильное толкование параметра
+				printf(">>invalid option: %s\n", argv[optind - 1]);
+				return -1;
 
-			default:
-				printf ("?? getopt возвратило код символа 0%o ??\n", c);
+			default: //сюда программа не должна зайти...
+				printf ("GETOPT RETURNED UNEXPECTED VALUE %o\n", c);
+				return -3;
         }
     }
 
-    if (optind < argc) {
-        printf ("элементы ARGV, не paramы: ");
+    if (optind < argc) //вывод non-options
+	{
+        printf ("non params: ");
         while (optind < argc)
             printf ("%s ", argv[optind++]);
         printf ("\n");
     }
 
-    exit (0);
+    return 0;
 }

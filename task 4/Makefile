@@ -1,9 +1,9 @@
 CC = gcc
 CFLAGS = -std=c99
 
-SRC = mcst3.c cmpfunc.c countlines.c sort.c swap.c sizeoffile.c
+SRC = mcst4.c
 
-OUTPUT = t3
+OUTPUT = t4
 
 all: $(OUTPUT)
 
