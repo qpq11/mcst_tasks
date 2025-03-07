@@ -3,9 +3,9 @@
 #include <string.h>
 #include <ctype.h>
 
-const int maxLen    = 1000;
-const int maxVarCnt =  100;
-const int nameLen   =   50;
+#define maxLen 1000
+#define maxVarCnt 100
+#define nameLen 50
 
 typedef struct {
     char name[nameLen];
@@ -21,6 +21,8 @@ int GetNot(char** s);
 void SkipSpaces(char** s);
 void SyntaxError();
 
+int varCnt = 0;
+
 int main() 
 {
     FILE* fp = fopen("text.txt", "r");
@@ -30,7 +32,6 @@ int main()
         return -1;
     }
 
-	int varCnt = 0;
     char* reads = (char*) calloc(maxLen + 1, sizeof(char));
     if (!reads) 
 	{
