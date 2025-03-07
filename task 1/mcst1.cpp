@@ -2,24 +2,27 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#define ThreadCnt 4 
+#define ThreadCnt 4 //я взял 4 потока для программы
 
 typedef struct {
     int* subarray;
     int size;
 } ThreadData;
 
-int cmp_func(const void* a, const void* b) {
+int cmp_func(const void* a, const void* b) //функция-компаратор
+{ 
     return (*(int*)a - *(int*)b);
 }
 
-void* quick_sort(void* args) {
+void* quick_sort(void* args) //сортировка фрагментов массива с qsort
+{
     ThreadData* data = (ThreadData*)args;
     qsort(data->subarray, data->size, sizeof(int), cmp_func);
     return NULL;
 }
 
-int* merge(int* left, int leftSize, int* right, int rightSize) {
+int* merge(int* left, int leftSize, int* right, int rightSize) 
+{ //слияние отсортированных в потоках подмассивов
     int mergedSize = leftSize + rightSize;
     int* mergedArr = (int*) calloc(mergedSize, sizeof(int));
 
@@ -34,16 +37,18 @@ int* merge(int* left, int leftSize, int* right, int rightSize) {
     return mergedArr;
 }
 
-int main() {
+int main() 
+{
     pthread_t thread[ThreadCnt];
     ThreadData threadData[ThreadCnt];
     
+	//Ввод массива
     int arrSize;
-    printf("Введите размер массива: ");
+    printf("Array size: ");
     scanf("%d", &arrSize);
 
     int* arr = (int*) calloc(arrSize, sizeof(int));
-    printf("Введите %d элементов: ", arrSize);
+    printf("Enter %d elems: ", arrSize);
     for (int i = 0; i < arrSize; i++)
         scanf("%d", &arr[i]);
 
@@ -51,8 +56,10 @@ int main() {
     int baseSize = arrSize / ThreadCnt;
     int addSize = arrSize % ThreadCnt;
 
+	//разделение массива между потоками
     int start = 0;
-    for (int j = 0; j < ThreadCnt; j++) {
+    for (int j = 0; j < ThreadCnt; j++) 
+	{
         int size = baseSize + (j == ThreadCnt - 1 ? addSize : 0);
         threadSubArr[j] = (int*) calloc(size, sizeof(int));
 
@@ -66,25 +73,29 @@ int main() {
         pthread_create(&thread[j], NULL, quick_sort, &threadData[j]);
     }
 
+	//возврат из потоков, объединение отсортированных подмассивов в один
     for (int j = 0; j < ThreadCnt; j++)
         pthread_join(thread[j], NULL);
 
     int* res = threadSubArr[0];
     int resSize = (ThreadCnt == 1) ? arrSize : baseSize;
 
-    for (int j = 1; j < ThreadCnt; j++) {
+    for (int j = 1; j < ThreadCnt; j++) 
+	{
         res = merge(res, resSize, threadSubArr[j], (j == ThreadCnt - 1 ? baseSize + addSize : baseSize));
         resSize += (j == ThreadCnt - 1 ? baseSize + addSize : baseSize);
     }
 	
+	//сортировка массива из отсортированных частей
 	qsort(res, arrSize, sizeof(int), cmp_func);
 	
-    printf("Отсортированный массив: ");
+    printf("Sorted array: ");
     for (int i = 0; i < arrSize; i++)
         printf("%d ", res[i]);
     
     printf("\n");
 
+	//ОСВОБОДИТЬ ПАМЯТЬ
     free(res);
     free(arr);
     return 0;
